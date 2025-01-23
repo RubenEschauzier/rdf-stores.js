@@ -125,7 +125,28 @@ describe('RdfStoreIndexNestedMapSampling', () => {
       const result =index.sample([ DF.namedNode('g0'), DF.namedNode('s0'),
         DF.namedNode('p2'), undefined ], [ 0, 2 ]);
       expect(result.next()).toEqual({"done": false, "value": [0,1,5,6]});
-      expect(() => result.next()).toThrow(Error("Invalid index encountered"))});
+      expect(() => result.next()).toThrow(Error("Invalid index encountered"))}
+    );
+    it('should return nothing for id not in index', () => {
+      const result = [ ...index.sample([ DF.namedNode('g4'), DF.namedNode('s0'),
+        DF.namedNode('p2'), undefined ], [ 0, 1 ]) ];
+      expect(result).toEqual([]);
+    })
+    it('should return nothing for id not in first map', () => {
+      const result = [ ...index.sample([ DF.namedNode('s0'), DF.namedNode('s0'),
+        DF.namedNode('p2'), undefined ], [ 0, 1 ]) ];
+      expect(result).toEqual([]);
+    })
+    it('should return nothing for id not in second map', () => {
+      const result = [ ...index.sample([ DF.namedNode('g0'), DF.namedNode('g0'),
+        DF.namedNode('p2'), undefined ], [ 0, 1 ]) ];
+      expect(result).toEqual([]);
+    })
+    it('should return nothing for id not in third map', () => {
+      const result = [ ...index.sample([ DF.namedNode('g0'), DF.namedNode('s0'),
+        DF.namedNode('g0'), undefined ], [ 0, 1 ]) ];
+      expect(result).toEqual([]);
+    })
 
     it('should remove', () => {
       const removed = index.remove([0,1,2,4]);
@@ -134,6 +155,14 @@ describe('RdfStoreIndexNestedMapSampling', () => {
     })
     it('should not remove when it doesnt exist in first map', () => {
       const removed = index.remove([2, 1, 2, 4]);
+      expect(removed).toBeFalsy()
+    });
+    it('should not remove when it doesnt exist in second map', () => {
+      const removed = index.remove([0, 5, 2, 4]);
+      expect(removed).toBeFalsy()
+    });
+    it('should not remove when it doesnt exist in third map', () => {
+      const removed = index.remove([0, 1, 20, 4]);
       expect(removed).toBeFalsy()
     });
     it('should not remove when it doesnt exist in final map', () => {
@@ -176,12 +205,21 @@ describe('RdfStoreIndexNestedMapSampling', () => {
         DF.namedNode('p2'), undefined ]))
       .toEqual(2)
     });
+    it('should count with no undef', () => {
+      expect(index.count([ DF.namedNode('g0'), DF.namedNode('s0'),
+        DF.namedNode('p2'), DF.namedNode('o3') ]))
+      .toEqual(1)
+    });
     it('should count with invalid term', () => {
       expect(index.count([ DF.namedNode('g2'), undefined,
         undefined, undefined ]))
       .toEqual(0)
     });
-
+    it('should return nothing on invalid term', () => {
+      const result = [ ...index.find([ DF.namedNode('g2'), undefined,
+        undefined, undefined ]) ];
+      expect(result).toEqual([])
+    });
     it('should find all undef', () => {
       const result = [ ...index.find([ undefined, undefined,
         undefined, undefined ]) ];
@@ -244,14 +282,9 @@ describe('RdfStoreIndexNestedMapSampling', () => {
 function numberToTerm(terms: [any, any, any, any][], index: any){
   const result: any[] = [];
   for (const term of terms){
-    console.log("STart")
-    console.log(term)
     result.push([index.dictionary.decode(term[0]),
     index.dictionary.decode(term[1]),index.dictionary.decode(term[2]),
     index.dictionary.decode(term[3])]);
-    console.log([index.dictionary.decode(term[0]),
-    index.dictionary.decode(term[1]),index.dictionary.decode(term[2]),
-    index.dictionary.decode(term[3])])
   }
   return result
 }

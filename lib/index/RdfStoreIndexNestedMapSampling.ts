@@ -117,9 +117,6 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     const map0: NestedMapActual<E, V> = this.nestedMap;
     const map0Keys = id0 !== undefined ? (map0.has(id0) ? [ id0 ] : []) : map0.keys();
     for (const key1 of map0Keys) {
-      if (key1 === this.protectedArrayKey || key1 === this.protectedCountKey){
-        continue;
-      }
       map1 = <any>map0.get(key1);
       partialQuad0 = term0 || this.dictionary.decode(key1);
       const map1Keys = id1 !== undefined ? (map1.has(id1) ? [ id1 ] : []) : map1.keys();
@@ -162,9 +159,6 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     const map0: NestedMapActual<E, V> = this.nestedMap;
     const map0Keys = id0 !== undefined ? (map0.has(id0) ? [ id0 ] : []) : map0.keys();
     for (const key1 of map0Keys) {
-      if (key1 === this.protectedArrayKey || key1 === this.protectedCountKey){
-        continue;
-      }
       map1 = <any>map0.get(key1);
       const map1Keys = id1 !== undefined ? (map1.has(id1) ? [ id1 ] : []) : map1.keys();
       for (const key2 of map1Keys) {
@@ -279,7 +273,6 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
         }
         if (index >= (<NestedMapActual<E,V>> map2.get(id2)!).size - 1){
           throw new Error('Invalid index encountered')
-          return;
         }
         const termArray = <E[]>(<NestedMapActual<E,V>> map2.get(id2)!).get(<any> this.protectedArrayKey);
         yield <any> [ searchResultMap0.key, searchResultMap1.key, id2, termArray[index] ];
