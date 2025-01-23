@@ -9,8 +9,8 @@ import type { NestedMapActual } from './RdfStoreIndexNestedMap';
 export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap<E, V> {
   protected readonly dictionary: ITermDictionary<E>;
   protected readonly nestedMap: NestedMapActual<E, V>;
-  protected readonly protectedCountKey: Symbol = Symbol('_count_');
-  protected readonly protectedArrayKey: Symbol = Symbol('_array_');
+  protected readonly protectedCountKey: symbol = Symbol('_count_');
+  protected readonly protectedArrayKey: symbol = Symbol('_array_');
 
   public readonly features = {
     quotedTripleFiltering: false,
@@ -71,14 +71,15 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
       return false;
     }
     const ret = map3.delete(terms[3]);
-    if (ret){
+    if (ret) {
       (<ICount> map1.get(<any> this.protectedCountKey)).count--;
       (<ICount> map2.get(<any> this.protectedCountKey)).count--;
       const arrayIndex = (<E[]> map3.get(<any> this.protectedArrayKey));
       const elementIndex = arrayIndex.indexOf(terms[3]);
       // TODO: Validate speed of these two approaches
-      arrayIndex[elementIndex] = arrayIndex[arrayIndex.length -1];  // Copy last element to index
-      arrayIndex.pop(); 
+      // eslint-disable-next-line unicorn/prefer-at
+      arrayIndex[elementIndex] = arrayIndex[arrayIndex.length - 1];
+      arrayIndex.pop();
       // When order matters (not in place)
       // const updatedArray = arrayIndex.splice(elementIndex, 1);
       // map3.set(<any> this.protectedArrayKey, <any> updatedArray);
@@ -96,6 +97,7 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     }
     return ret;
   }
+
   public override * find(terms: QuadPatternTerms): IterableIterator<QuadTerms> {
     const ids = encodeOptionalTerms(terms, this.dictionary);
     if (!ids) {
@@ -121,23 +123,23 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
       partialQuad0 = term0 || this.dictionary.decode(key1);
       const map1Keys = id1 !== undefined ? (map1.has(id1) ? [ id1 ] : []) : map1.keys();
       for (const key2 of map1Keys) {
-        if (key2 === this.protectedArrayKey || key2 === this.protectedCountKey){
+        if (key2 === this.protectedArrayKey || key2 === this.protectedCountKey) {
           continue;
         }
         map2 = <any>map1.get(key2);
         partialQuad1 = term1 || this.dictionary.decode(key2);
         const map2Keys = id2 !== undefined ? (map2.has(id2) ? [ id2 ] : []) : map2.keys();
         for (const key3 of map2Keys) {
-          if (key3 === this.protectedArrayKey || key3 === this.protectedCountKey){
+          if (key3 === this.protectedArrayKey || key3 === this.protectedCountKey) {
             continue;
-          }    
+          }
           map3 = <any>map2.get(key3);
           partialQuad2 = term2 || this.dictionary.decode(key3);
           const map3Keys = id3 !== undefined ? (map3.has(id3) ? [ id3 ] : []) : map3.keys();
           for (const key4 of map3Keys) {
-            if (key4 === this.protectedArrayKey || key4 === this.protectedCountKey){
+            if (key4 === this.protectedArrayKey || key4 === this.protectedCountKey) {
               continue;
-            }      
+            }
             partialQuad3 = term3 || this.dictionary.decode(key4);
             yield <any>[ partialQuad0, partialQuad1, partialQuad2, partialQuad3 ];
           }
@@ -162,28 +164,28 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
       map1 = <any>map0.get(key1);
       const map1Keys = id1 !== undefined ? (map1.has(id1) ? [ id1 ] : []) : map1.keys();
       for (const key2 of map1Keys) {
-        if (key2 === this.protectedArrayKey || key2 === this.protectedCountKey){
+        if (key2 === this.protectedArrayKey || key2 === this.protectedCountKey) {
           continue;
-        }  
+        }
         map2 = <any>map1.get(key2);
         const map2Keys = id2 !== undefined ? (map2.has(id2) ? [ id2 ] : []) : map2.keys();
         for (const key3 of map2Keys) {
-          if (key3 === this.protectedArrayKey || key3 === this.protectedCountKey){
+          if (key3 === this.protectedArrayKey || key3 === this.protectedCountKey) {
             continue;
-          }    
+          }
           map3 = <any>map2.get(key3);
           const map3Keys = id3 !== undefined ? (map3.has(id3) ? [ id3 ] : []) : map3.keys();
           for (const key4 of map3Keys) {
-            if (key4 === this.protectedArrayKey || key4 === this.protectedCountKey){
+            if (key4 === this.protectedArrayKey || key4 === this.protectedCountKey) {
               continue;
-            }      
+            }
             yield [ <E> key1, <E> key2, <E> key3, <E> key4 ];
           }
         }
       }
     }
-  }    
-      
+  }
+
   public override count(terms: QuadPatternTerms): number {
     let count = 0;
 
@@ -203,15 +205,15 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     const map0: NestedMapActual<E, V> = this.nestedMap;
     const map0Keys = id0 !== undefined ? (map0.has(id0) ? [ id0 ] : []) : map0.keys();
     for (const key1 of map0Keys) {
-      if (key1 !== this.protectedArrayKey && key1 !== this.protectedCountKey){
+      if (key1 !== this.protectedArrayKey && key1 !== this.protectedCountKey) {
         map1 = <any>map0.get(key1);
         const map1Keys = id1 !== undefined ? (map1.has(id1) ? [ id1 ] : []) : map1.keys();
         for (const key2 of map1Keys) {
-          if (key2 !== this.protectedArrayKey && key2 !== this.protectedCountKey){
+          if (key2 !== this.protectedArrayKey && key2 !== this.protectedCountKey) {
             map2 = <any>map1.get(key2);
             const map2Keys = id2 !== undefined ? (map2.has(id2) ? [ id2 ] : []) : map2.keys();
             for (const key3 of map2Keys) {
-              if (key3 !== this.protectedArrayKey && key3 !== this.protectedCountKey){
+              if (key3 !== this.protectedArrayKey && key3 !== this.protectedCountKey) {
                 map3 = <any>map2.get(key3);
                 if (id3 !== undefined) {
                   if (map3.has(id3)) {
@@ -224,7 +226,7 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
               }
             }
           }
-        }  
+        }
       }
     }
     return count;
@@ -232,16 +234,16 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
 
   /**
    * Extracts triple patterns at given indexes. In GSPO index, if terms = [g0, s0, undefined, undefined]
-   * indexes = [1, 5] and index = g0: {s0:{ p1: [o1, o2], p2: [o3, o4], p3: [o5, o6] } } it will return (s0 p1 o2), (s0 p3 o6).
-   * Note that the indexes values should be lower than the number of triples existing at the non-undefined terms.
-   * So for terms [g0, s0, p1, undefined] indexes [1,5] would return nothing as # triples for the term = 2
+   * indexes = [1, 5] and index = g0: {s0:{ p1: [o1, o2], p2: [o3, o4], p3: [o5, o6] } } it will return (s0 p1 o2),
+   * (s0 p3 o6). Note that the indexes values should be lower than the number of triples existing at the
+   * non-undefined terms. So for terms [g0, s0, p1, undefined] indexes [1,5] would return nothing as # triples
+   * for the term = 2
    * @param terms
    * @param n
    * @param indexes
    * @returns
    */
   public * sample(terms: QuadPatternTerms, indexes: number[]): IterableIterator<QuadTerms> {
-    console.log(`Terms: ${JSON.stringify(terms)}`)
     const ids = encodeOptionalTerms(terms, this.dictionary);
     if (!ids) {
       return;
@@ -268,16 +270,15 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
 
       const map2: NestedMapActual<E, V> = <any> map1.get(searchResultMap1.key);
       if (id2 !== undefined) {
-        if (!map2.has(id2)){
+        if (!map2.has(id2)) {
           return;
         }
-        if (index >= (<NestedMapActual<E,V>> map2.get(id2)!).size - 1){
-          throw new Error('Invalid index encountered')
+        if (index >= (<NestedMapActual<E, V>> map2.get(id2)!).size - 1) {
+          throw new Error('Invalid index encountered');
         }
-        const termArray = <E[]>(<NestedMapActual<E,V>> map2.get(id2)!).get(<any> this.protectedArrayKey);
+        const termArray = <E[]>(<NestedMapActual<E, V>> map2.get(id2)!).get(<any> this.protectedArrayKey);
         yield <any> [ searchResultMap0.key, searchResultMap1.key, id2, termArray[index] ];
-      }
-      else{
+      } else {
         for (const key2 of map2.keys()) {
           if (key2 !== this.protectedArrayKey && key2 !== this.protectedCountKey) {
             const size = (<NestedMapActual<E, V>>map2.get(key2)).size - 1;
@@ -314,7 +315,8 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     if (mapKeys.length > 1) {
       for (const key1 of mapKeys) {
         if (key1 !== this.protectedArrayKey && key1 !== this.protectedCountKey) {
-          const nTriplesInMap = (<ICount> (<NestedMapActual<E, V>>map.get(key1)).get(<any> this.protectedCountKey)).count;
+          const nTriplesInMap = (<ICount> (<NestedMapActual<E, V>>map.get(key1))
+            .get(<any> this.protectedCountKey)).count;
           searchIndex += nTriplesInMap;
           if (searchIndex > index) {
             // Go back one step
