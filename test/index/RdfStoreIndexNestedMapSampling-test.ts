@@ -19,88 +19,68 @@ describe('RdfStoreIndexNestedMapSampling', () => {
       dictionary,
       dataFactory: new DataFactory(),
     });
-  });
-  it('should construct proper store', () => {
     index.set([
-      dictionary.encode(DF.namedNode('g1')),
-      dictionary.encode(DF.namedNode('s1')),
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s0')),
       dictionary.encode(DF.namedNode('p1')),
       dictionary.encode(DF.namedNode('o1')),
-    ], false);
+    ], true);
     index.set([
-      dictionary.encode(DF.namedNode('g1')),
-      dictionary.encode(DF.namedNode('s1')),
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s0')),
       dictionary.encode(DF.namedNode('p1')),
       dictionary.encode(DF.namedNode('o2')),
     ], true);
-    // Console.log(index);
+    index.set([
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s0')),
+      dictionary.encode(DF.namedNode('p2')),
+      dictionary.encode(DF.namedNode('o3')),
+    ], true);
+    index.set([
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s0')),
+      dictionary.encode(DF.namedNode('p2')),
+      dictionary.encode(DF.namedNode('o4')),
+    ], true);
+    index.set([
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s0')),
+      dictionary.encode(DF.namedNode('p3')),
+      dictionary.encode(DF.namedNode('o5')),
+    ], true);
+    index.set([
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s0')),
+      dictionary.encode(DF.namedNode('p3')),
+      dictionary.encode(DF.namedNode('o6')),
+    ], true);
+    index.set([
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s1')),
+      dictionary.encode(DF.namedNode('p3')),
+      dictionary.encode(DF.namedNode('o6')),
+    ], true);
+    index.set([
+      dictionary.encode(DF.namedNode('g0')),
+      dictionary.encode(DF.namedNode('s1')),
+      dictionary.encode(DF.namedNode('p3')),
+      dictionary.encode(DF.namedNode('o7')),
+    ], true);
+    index.set([
+      dictionary.encode(DF.namedNode('g1')),
+      dictionary.encode(DF.namedNode('s0')),
+      dictionary.encode(DF.namedNode('p1')),
+      dictionary.encode(DF.namedNode('o1')),
+    ], true);
+    index.set([
+      dictionary.encode(DF.namedNode('g1')),
+      dictionary.encode(DF.namedNode('s0')),
+      dictionary.encode(DF.namedNode('p1')),
+      dictionary.encode(DF.namedNode('o2')),
+    ], true);
   });
-  describe('sample, delete, find, findEncoded', () => {
-    beforeEach(() => {
-      // Index: g0: {s0:{ p1: [o1, o2], p2: [o3, o4], p3: [o5, o6] }, s1: {p3: [o6, o7]}}, g1: {s0:{p1:[o1,o2]}}
-      // Or: 0: {1: {2: [3,4], 5: [6,7], 8: [9,10]}, 11: {8: [10, 12]}}, 13: {1: {2: [3,4]}}
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p1')),
-        dictionary.encode(DF.namedNode('o1')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p1')),
-        dictionary.encode(DF.namedNode('o2')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p2')),
-        dictionary.encode(DF.namedNode('o3')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p2')),
-        dictionary.encode(DF.namedNode('o4')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p3')),
-        dictionary.encode(DF.namedNode('o5')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p3')),
-        dictionary.encode(DF.namedNode('o6')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s1')),
-        dictionary.encode(DF.namedNode('p3')),
-        dictionary.encode(DF.namedNode('o6')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g0')),
-        dictionary.encode(DF.namedNode('s1')),
-        dictionary.encode(DF.namedNode('p3')),
-        dictionary.encode(DF.namedNode('o7')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g1')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p1')),
-        dictionary.encode(DF.namedNode('o1')),
-      ], true);
-      index.set([
-        dictionary.encode(DF.namedNode('g1')),
-        dictionary.encode(DF.namedNode('s0')),
-        dictionary.encode(DF.namedNode('p1')),
-        dictionary.encode(DF.namedNode('o2')),
-      ], true);
-    });
-
+  describe('sample', () => {
     it('should sample all undef', () => {
       const result = [ ...index.sample([ undefined, undefined,
         undefined, undefined ], [ 8 ]) ];
@@ -147,7 +127,8 @@ describe('RdfStoreIndexNestedMapSampling', () => {
         DF.namedNode('g0'), undefined ], [ 0, 1 ]) ];
       expect(result).toEqual([]);
     })
-
+  });
+  describe('remove', () => {
     it('should remove', () => {
       const removed = index.remove([0,1,2,4]);
       expect(removed).toBeTruthy()
@@ -180,7 +161,8 @@ describe('RdfStoreIndexNestedMapSampling', () => {
       expect(index.remove([13, 1, 2, 4])).toBeTruthy();
       expect((<any> index).nestedMap.has(13)).toBeFalsy()
     });
-    
+  });
+  describe('count', () => {
     it('should count with all undef', () => {
       expect(index.count([ undefined, undefined,undefined, undefined ]))
         .toEqual(10)
@@ -215,6 +197,8 @@ describe('RdfStoreIndexNestedMapSampling', () => {
         undefined, undefined ]))
       .toEqual(0)
     });
+  });
+  describe('find', () => {
     it('should return nothing on invalid term', () => {
       const result = [ ...index.find([ DF.namedNode('g2'), undefined,
         undefined, undefined ]) ];
@@ -246,7 +230,8 @@ describe('RdfStoreIndexNestedMapSampling', () => {
         DF.namedNode('p2'), undefined ]) ];
       expect(result).toEqual(numberToTerm([[0,1,5,6], [0,1,5,7]], index));
     });
-
+  });
+  describe('findEncoded', () => {
     it('should findEncoded all undef', () => {
       const result = [ ...index.findEncoded([undefined, undefined, undefined, undefined],
         [ undefined, undefined, undefined, undefined ]) ];
