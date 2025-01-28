@@ -3,6 +3,7 @@ import type { ITermDictionary } from '../../lib/dictionary/ITermDictionary';
 import { TermDictionaryNumberMap } from '../../lib/dictionary/TermDictionaryNumberMap';
 import { TermDictionaryQuotedIndexed } from '../../lib/dictionary/TermDictionaryQuotedIndexed';
 import { RdfStoreIndexNestedMapSampling } from '../../lib/index/RdfStoreIndexNestedMapSampling';
+import { INIT } from 'asynciterator';
 
 const DF = new DataFactory();
 
@@ -81,49 +82,79 @@ describe('RdfStoreIndexNestedMapSampling', () => {
   });
   describe('sample', () => {
     it('should sample all undef', () => {
-      const result = [ ...index.sample([ undefined, undefined,
-        undefined, undefined ], [ 8 ]) ];
-      expect(result).toEqual([[ 13, 1, 2, 3 ]]);
+      const result = [...index.sample([undefined, undefined, undefined, undefined], [8])];
+      expect(result).toEqual(numberToTerm([[13, 1, 2, 3]], index));
     });
+  
     it('should sample at index 1 undef', () => {
-      const result = [ ...index.sample([ DF.namedNode('g0'), undefined,
-        undefined, undefined ], [ 6 ]) ];
-      expect(result).toEqual([[ 0, 11, 8, 10 ]]);
+      const result = [...index.sample([DF.namedNode('g0'), undefined, undefined, undefined], [6])];
+      expect(result).toEqual(numberToTerm([[0, 11, 8, 10]], index));
     });
+
     it('should sample at index 2 undef', () => {
-      const result = [ ...index.sample([ DF.namedNode('g0'), DF.namedNode('s0'),
-        undefined, undefined ], [ 0, 1 ]) ];
-      expect(result).toEqual([[ 0, 1, 2, 3 ], [ 0, 1, 2, 4 ]]);
+      const result = [...index.sample([DF.namedNode('g0'), DF.namedNode('s0'), undefined, undefined], [0, 1])];
+      expect(result).toEqual(numberToTerm([[0, 1, 2, 3], [0, 1, 2, 4]], index));
     });
+  
     it('should sample at index 3 undef', () => {
-      const result = [ ...index.sample([ DF.namedNode('g0'), DF.namedNode('s0'),
-        DF.namedNode('p2'), undefined ], [ 0, 1 ]) ];
-      expect(result).toEqual([[ 0, 1, 5, 6 ], [ 0, 1, 5, 7 ]]);
+      const result = [...index.sample([DF.namedNode('g0'), DF.namedNode('s0'), DF.namedNode('p2'), undefined], [0, 1])];
+      expect(result).toEqual(numberToTerm([[0, 1, 5, 6], [0, 1, 5, 7]], index));
     });
+
+    it('should sample in order with duplicate indexes', () => {
+      const result = [...index.sample([DF.namedNode('g0'), DF.namedNode('s0'), DF.namedNode('p2'), undefined], [0, 0])];
+      expect(result).toEqual(numberToTerm([[0, 1, 5, 6], [0, 1, 5, 6]], index));
+    });
+
+    it('should sample out of order', () => {
+      const result = [...index.sample([undefined, DF.namedNode('s0'), DF.namedNode('p1'), DF.namedNode('o2')], [0, 1])];
+      expect(result).toEqual(numberToTerm([[0, 1, 2, 4], [13, 1, 2, 4]], index));
+    });
+
+    it('should sample out of order with out of order indexes', () => {
+      const result = [...index.sample([undefined, DF.namedNode('s0'), undefined, DF.namedNode('o2')], [1,0])];
+      expect(result).toEqual(numberToTerm([[0, 1, 2, 4], [13, 1, 2, 4]], index));
+    });
+
+    it('should sample correctly in the same map', () => {
+      const result = [...index.sample([undefined, DF.namedNode('s0'), DF.namedNode('p1'), undefined], [1,0])];
+      expect(result).toEqual(numberToTerm([[0, 1, 2, 3], [0, 1, 2, 4]], index));
+    })
+
+    it('should sample out of order with duplicate indexes', () => {
+      const result = [...index.sample([undefined, DF.namedNode('s0'), undefined, DF.namedNode('o2')], [1,0,0,1])];
+      expect(result).toEqual(numberToTerm([[0, 1, 2, 4], [0, 1, 2, 4], [13, 1, 2, 4], [13, 1, 2, 4]], index));
+    });
+
     it('should error when out of bounds', () => {
-      const result = index.sample([ DF.namedNode('g0'), DF.namedNode('s0'),
-        DF.namedNode('p2'), undefined ], [ 0, 2 ]);
-      expect(result.next()).toEqual({ done: false, value: [ 0, 1, 5, 6 ]});
-      expect(() => result.next()).toThrow(new Error('Invalid index encountered')); });
+      const result = index.sample([DF.namedNode('g0'), DF.namedNode('s0'), DF.namedNode('p2'), undefined], [2]);
+      expect(() => result.next()).toThrow(new Error('Invalid index encountered: 2, size map: 2'));
+    });
+
+    it('should return nothing for empty indexes array', () => {
+      const result = [...index.sample([undefined, DF.namedNode('s0'), DF.namedNode('p1'), undefined], [])];
+      expect(result).toEqual(numberToTerm([], index));
+    });
+
+
     it('should return nothing for id not in index', () => {
-      const result = [ ...index.sample([ DF.namedNode('g4'), DF.namedNode('s0'),
-        DF.namedNode('p2'), undefined ], [ 0, 1 ]) ];
-      expect(result).toEqual([]);
+      const result = [...index.sample([DF.namedNode('g4'), DF.namedNode('s0'), DF.namedNode('p2'), undefined], [0, 1])];
+      expect(result).toEqual(numberToTerm([], index));
     });
+  
     it('should return nothing for id not in first map', () => {
-      const result = [ ...index.sample([ DF.namedNode('s0'), DF.namedNode('s0'),
-        DF.namedNode('p2'), undefined ], [ 0, 1 ]) ];
-      expect(result).toEqual([]);
+      const result = [...index.sample([DF.namedNode('s0'), DF.namedNode('s0'), DF.namedNode('p2'), undefined], [0, 1])];
+      expect(result).toEqual(numberToTerm([], index));
     });
+  
     it('should return nothing for id not in second map', () => {
-      const result = [ ...index.sample([ DF.namedNode('g0'), DF.namedNode('g0'),
-        DF.namedNode('p2'), undefined ], [ 0, 1 ]) ];
-      expect(result).toEqual([]);
+      const result = [...index.sample([DF.namedNode('g0'), DF.namedNode('g0'), DF.namedNode('p2'), undefined], [0, 1])];
+      expect(result).toEqual(numberToTerm([], index));
     });
+  
     it('should return nothing for id not in third map', () => {
-      const result = [ ...index.sample([ DF.namedNode('g0'), DF.namedNode('s0'),
-        DF.namedNode('g0'), undefined ], [ 0, 1 ]) ];
-      expect(result).toEqual([]);
+      const result = [...index.sample([DF.namedNode('g0'), DF.namedNode('s0'), DF.namedNode('g0'), undefined], [0, 1])];
+      expect(result).toEqual(numberToTerm([], index));
     });
   });
   describe('remove', () => {
@@ -151,7 +182,8 @@ describe('RdfStoreIndexNestedMapSampling', () => {
     it('should update counts and array index', () => {
       expect(index.remove([ 0, 1, 2, 3 ])).toBeTruthy();
       expect([ ...index.sample([ DF.namedNode('g0'), DF.namedNode('s0'),
-        undefined, undefined ], [ 0 ]) ]).toEqual([[ 0, 1, 2, 4 ]]);
+        undefined, undefined ], [ 0 ]) ])
+        .toEqual(numberToTerm([[ 0, 1, 2, 4 ]], index));
     });
     it('should correctly remove unused maps', () => {
       expect(index.remove([ 13, 1, 2, 3 ])).toBeTruthy();

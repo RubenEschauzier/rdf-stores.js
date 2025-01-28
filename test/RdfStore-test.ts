@@ -7,7 +7,7 @@ import { TermDictionaryNumberRecordFullTerms } from '../lib/dictionary/TermDicti
 import { RdfStoreIndexNestedRecord } from '../lib/index/RdfStoreIndexNestedRecord';
 import { RdfStore } from '../lib/RdfStore';
 import 'jest-rdf';
-import { dictClazzToInstance, indexClazzToInstance } from './testUtil';
+import { dictClazzToInstance, indexClazzToInstance, samplingSupported } from './testUtil';
 
 const streamifyArray = require('streamify-array');
 
@@ -915,6 +915,55 @@ describe('RdfStore', () => {
                 ]);
               });
             });
+            describe('sample', () => {
+              it('should error when using indexes not supporting sampling', () => {
+                if (!samplingSupported.has(indexClazz)){
+                  expect(() => [...store.sample([0], 
+                    undefined, undefined, undefined, undefined)]
+                  ).toThrow("Tried to sample from rdf-store with index that does not support sampling");  
+                }
+              });
+              it('should correctly sample with undefined subject', () => {
+                if(samplingSupported.has(indexClazz)){
+                  expect([...store.sample([0,1], 
+                    undefined, DF.namedNode('p1'), DF.namedNode('o1'), DF.namedNode('g1'),
+                  )]).toEqual([
+                    DF.quad(
+                      DF.namedNode('s1'),
+                      DF.namedNode('p1'),
+                      DF.namedNode('o1'),
+                      DF.namedNode('g1'),
+                    ),
+                    DF.quad(
+                      DF.namedNode('s2'),
+                      DF.namedNode('p1'),
+                      DF.namedNode('o1'),
+                      DF.namedNode('g1'),
+                    ),  
+                  ])
+                }
+              });
+              // it('should correctly sample with undefined predicate', () => {
+              //   if(samplingSupported.has(indexClazz)){
+              //     expect([...store.sample([0], 
+              //       DF.namedNode('s2'), undefined, DF.namedNode('o1'), DF.namedNode('g1'),
+              //     )]).toEqual([
+              //       DF.quad(
+              //         DF.namedNode('s2'),
+              //         DF.namedNode('p1'),
+              //         DF.namedNode('o1'),
+              //         DF.namedNode('g1'),
+              //       ),  
+              //     ])
+              //   }
+              // });
+              it('should correctly sample with undefined object', () => {
+                
+              });
+              it('should correctly sample with undefined graph', () => {
+                
+              });
+            })
           });
         });
 

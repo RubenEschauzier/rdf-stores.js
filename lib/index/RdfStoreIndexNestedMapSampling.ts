@@ -14,6 +14,7 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
 
   public readonly features = {
     quotedTripleFiltering: false,
+    sampling: true
   };
 
   public constructor(options: IRdfStoreOptions<E>) {
@@ -193,10 +194,7 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     if (!ids) {
       return 0;
     }
-    const id0 = ids[0];
-    const id1 = ids[1];
-    const id2 = ids[2];
-    const id3 = ids[3];
+    const [ id0, id1, id2, id3 ] = ids;
 
     let map1: NestedMapActual<E, V>;
     let map2: NestedMapActual<E, V>;
@@ -238,6 +236,8 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
    * (s0 p3 o6). Note that the indexes values should be lower than the number of triples existing at the
    * non-undefined terms. So for terms [g0, s0, p1, undefined] indexes [1,5] would return nothing as # triples
    * for the term = 2
+   * When passed a term: [undefined, s0, p0, o0] this method will use a slower method to do sampling, as the _size
+   * based sampling is no longer correct.
    * @param terms
    * @param n
    * @param indexes
@@ -248,8 +248,36 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     if (!ids) {
       return;
     }
-    // TODO: If all are defined just do a lookup with normal function or say you're not allowed that
+    if (indexes.length===0){
+      return;
+    }
+  
     const [ id0, id1, id2, id3 ] = ids;
+
+    const outOfOrder = ids.some(
+      (id, i) => id === undefined && ids.slice(i + 1)
+      .some(next => next !== undefined)
+    );
+
+    if (outOfOrder){
+      for (const sampled of this.sampleOutOfOrder(id0, id1, id2, id3, indexes)){
+        yield sampled
+      }  
+    }
+    else{
+      for (const sampled of this.sampleInOrder(id0, id1, id2, id3, indexes)){
+        yield sampled
+      }  
+    }
+
+  }
+
+  private * sampleInOrder(id0: E | undefined, id1: E | undefined, 
+    id2: E | undefined, id3: E | undefined, indexes: number[]){
+    let partialQuad0: RDF.Term;
+    let partialQuad1: RDF.Term;
+    let partialQuad2: RDF.Term;
+    let partialQuad3: RDF.Term;
 
     for (const index of indexes) {
       // The search index taking into account how many triples we've skipped during traversal of index
@@ -261,23 +289,30 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
       }
       const searchResultMap0 = this.searchMap(id0, map0, searchIndex, index);
       searchIndex = searchResultMap0.searchIndex;
+      partialQuad0 = this.dictionary.decode(searchResultMap0.key)
       const map1: NestedMapActual<E, V> = <any> map0.get(searchResultMap0.key);
       if (id1 !== undefined && !map1.has(id1)) {
         return;
       }
       const searchResultMap1 = this.searchMap(id1, map1, searchIndex, index);
       searchIndex = searchResultMap1.searchIndex;
+      partialQuad1 = this.dictionary.decode(searchResultMap1.key)
 
       const map2: NestedMapActual<E, V> = <any> map1.get(searchResultMap1.key);
       if (id2 !== undefined) {
         if (!map2.has(id2)) {
           return;
         }
-        if (index >= (<NestedMapActual<E, V>> map2.get(id2)!).size - 1) {
-          throw new Error('Invalid index encountered');
+        const withinArrayIndex: number = index - searchIndex;
+        if (withinArrayIndex >= (<NestedMapActual<E, V>> map2.get(id2)!).size - 1) {
+          // Temp debugging code, just return here usually
+          throw new Error(`Invalid index encountered: ${withinArrayIndex}, size map: ` + 
+            `${(<NestedMapActual<E, V>> map2.get(id2)!).size - 1}`);        
         }
         const termArray = <E[]>(<NestedMapActual<E, V>> map2.get(id2)!).get(<any> this.protectedArrayKey);
-        yield <any> [ searchResultMap0.key, searchResultMap1.key, id2, termArray[index] ];
+        partialQuad2 = this.dictionary.decode(id2);
+        partialQuad3 = this.dictionary.decode(termArray[withinArrayIndex]);
+        yield <any> [ partialQuad0, partialQuad1, partialQuad2, partialQuad3 ];
       } else {
         for (const key2 of map2.keys()) {
           if (key2 !== this.protectedArrayKey && key2 !== this.protectedCountKey) {
@@ -288,7 +323,9 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
               const termArray = <E[]> (<NestedMapActual<E, V>>map2.get(key2)).get(<any> this.protectedArrayKey);
               // Find correct index within the array
               const tripleIndex = index - (searchIndex);
-              yield <any> [ searchResultMap0.key, searchResultMap1.key, key2, termArray[tripleIndex] ];
+              partialQuad2 = this.dictionary.decode(key2);
+              partialQuad3 = this.dictionary.decode(termArray[tripleIndex]);
+              yield <any> [ partialQuad0, partialQuad1, partialQuad2, partialQuad3 ];
               break;
             }
           }
@@ -311,17 +348,18 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
     searchIndex: number, index: number): IMapSearchResult<E> {
     // If we're here there is a match in the map for id0
     const mapKeys = [ ...(id !== undefined ? [ id ] : map.keys()) ];
+    // console.log(`Map keys: ${JSON.stringify(mapKeys)}, ${id}`)
     let key;
     if (mapKeys.length > 1) {
-      for (const key1 of mapKeys) {
-        if (key1 !== this.protectedArrayKey && key1 !== this.protectedCountKey) {
-          const nTriplesInMap = (<ICount> (<NestedMapActual<E, V>>map.get(key1))
+      for (const mapKey of mapKeys) {
+        if (mapKey !== this.protectedArrayKey && mapKey !== this.protectedCountKey) {
+          const nTriplesInMap = (<ICount> (<NestedMapActual<E, V>>map.get(mapKey))
             .get(<any> this.protectedCountKey)).count;
           searchIndex += nTriplesInMap;
           if (searchIndex > index) {
             // Go back one step
             searchIndex -= nTriplesInMap;
-            key = key1;
+            key = mapKey;
             break;
           }
         }
@@ -336,6 +374,72 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
       key = mapKeys[0];
     }
     return { key, searchIndex };
+  }
+
+  private * sampleOutOfOrder(id0: E | undefined, id1: E | undefined, 
+    id2: E | undefined, id3: E | undefined, indexes: number[]
+  ){
+    // Sort in reverse order and pop each index when found
+    indexes.sort((a,b) => b-a);
+    let searchIndex = 0;
+    let indexToFind = indexes.pop();
+
+    let map1: NestedMapActual<E, V>;
+    let map2: NestedMapActual<E, V>;
+    let map3: NestedMapActual<E, V>;
+
+    const map0: NestedMapActual<E, V> = this.nestedMap;
+    const map0Keys = id0 !== undefined ? (map0.has(id0) ? [ id0 ] : []) : map0.keys();
+    for (const key1 of map0Keys) {
+      if (key1 !== this.protectedArrayKey && key1 !== this.protectedCountKey) {
+        map1 = <any>map0.get(key1);
+        const map1Keys = id1 !== undefined ? (map1.has(id1) ? [ id1 ] : []) : map1.keys();
+        for (const key2 of map1Keys) {
+          if (key2 !== this.protectedArrayKey && key2 !== this.protectedCountKey) {
+            map2 = <any>map1.get(key2);
+            const map2Keys = id2 !== undefined ? (map2.has(id2) ? [ id2 ] : []) : map2.keys();
+            for (const key3 of map2Keys) {
+              if (key3 !== this.protectedArrayKey && key3 !== this.protectedCountKey) {
+                map3 = <any>map2.get(key3);
+                if (id3 !== undefined) {
+                  if (map3.has(id3)) {
+                    // If we find our searchIndex === indexToFind, we keep popping the indexes array
+                    // For the case of duplicate indexes
+                    while(searchIndex === indexToFind){
+                      yield <any> [ this.dictionary.decode(key1), this.dictionary.decode(key2),
+                        this.dictionary.decode(key3), this.dictionary.decode(id3) ];
+                      indexToFind = indexes.pop();
+                      // We are done sampling
+                      if (indexToFind === undefined){
+                        return;
+                      }
+                    }
+                    searchIndex++;
+                  }
+                } else {
+                  // Reduce by one to ensure the _array_ property isnt counted
+                  searchIndex += map3.size - 1;
+                  if (searchIndex > indexToFind!){
+                    while(searchIndex > indexToFind!){
+                      const tripleIndex = indexToFind! - (searchIndex - map3.size + 1);
+                      const termArray = <E[]> (<NestedMapActual<E, V>>map2.get(key3)).get(<any> this.protectedArrayKey);
+                      const finalTerm = this.dictionary.decode(termArray[tripleIndex]);
+                      yield <any> [ this.dictionary.decode(key1), this.dictionary.decode(key2),
+                        this.dictionary.decode(key3), finalTerm ];
+
+                      indexToFind = indexes.pop();
+                      if (indexToFind === undefined){
+                        return;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
 

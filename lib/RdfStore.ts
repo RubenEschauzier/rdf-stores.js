@@ -321,6 +321,53 @@ export class RdfStore<E = any, Q extends RDF.BaseQuad = RDF.Quad> implements RDF
   }
 
   /**
+   * Sample triples matching a quad pattern using an array of indexes. This is only possible
+   * when using an index which supports sampling. Note that the index of a triple matching a pattern
+   * in the rdf-store index is not guaranteed to stay the same after deletion operations. For this reason, 
+   * this function should primarily be used when random access to triples is desired.
+   * By for example getting the # of triples matching a pattern, randomly generating indexes and 
+   * retrieving them using this function.
+   * (Note that relative consistency of triple indexes during deletion is fairly easy to achieve, so if 
+   * it is desired it can be changed.)
+   * @param indexes 
+   * @param subject 
+   * @param predicate 
+   * @param object 
+   * @param graph 
+   */
+  public * sample( 
+    indexes: number[] ,  
+    subject?: RDF.Term | null,
+    predicate?: RDF.Term | null,
+    object?: RDF.Term | null,
+    graph?: RDF.Term | null,
+  ){
+    if (!Object.values(this.indexesWrapped).every(wrapped => wrapped.index.features.sampling)){
+      throw new Error("Tried to sample from rdf-store with index that does not support sampling");
+    }
+    // Construct a quad pattern array
+    const [ quadComponents ] =
+      quadToPattern(subject, predicate, object, graph, false);
+
+    // Determine the best index for this pattern
+    const indexWrapped = this.indexesWrapped[getBestIndex(this.indexesWrappedComponentOrders, quadComponents)];
+
+    // Re-order the quad pattern based on this best index's component order
+    const quadComponentsOrdered = <QuadPatternTerms> orderQuadComponents(indexWrapped.componentOrder, quadComponents);
+
+    for (const decomposedQuad of indexWrapped.index.sample!(quadComponentsOrdered, indexes)! ){
+      // De-order the resulting quad components into the normal SPOG order for quad creation.
+      const quad = this.dataFactory.quad(
+        decomposedQuad[indexWrapped.componentOrderInverse.subject],
+        decomposedQuad[indexWrapped.componentOrderInverse.predicate],
+        decomposedQuad[indexWrapped.componentOrderInverse.object],
+        decomposedQuad[indexWrapped.componentOrderInverse.graph],
+      );
+      yield quad;
+    }
+  }
+
+  /**
    * Wrap this store inside a DatasetCore interface.
    * Any mutations in either this store or the wrapper will propagate to each other.
    */

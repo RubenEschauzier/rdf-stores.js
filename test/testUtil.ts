@@ -10,12 +10,15 @@ import { RdfStoreIndexNestedMap } from '../lib/index/RdfStoreIndexNestedMap';
 import { RdfStoreIndexNestedMapQuoted } from '../lib/index/RdfStoreIndexNestedMapQuoted';
 import { RdfStoreIndexNestedMapRecursive } from '../lib/index/RdfStoreIndexNestedMapRecursive';
 import { RdfStoreIndexNestedMapRecursiveQuoted } from '../lib/index/RdfStoreIndexNestedMapRecursiveQuoted';
+import { RdfStoreIndexNestedMapSampling } from '../lib/index/RdfStoreIndexNestedMapSampling';
 import { RdfStoreIndexNestedRecord } from '../lib/index/RdfStoreIndexNestedRecord';
 import { RdfStoreIndexNestedRecordQuoted } from '../lib/index/RdfStoreIndexNestedRecordQuoted';
 import type { IRdfStoreOptions } from '../lib/IRdfStoreOptions';
 
 export const indexClazzToInstance: Record<string, (subOptions: IRdfStoreOptions<number>) =>
 IRdfStoreIndex<number, boolean>> = {
+  RdfStoreIndexNestedMapSampling:
+  (subOptions: IRdfStoreOptions<number>) => new RdfStoreIndexNestedMapSampling<number, boolean>(subOptions),
   RdfStoreIndexNestedMap:
     (subOptions: IRdfStoreOptions<number>) => new RdfStoreIndexNestedMap<number, boolean>(subOptions),
   RdfStoreIndexNestedMapQuoted:
@@ -37,7 +40,21 @@ export const indexSupportsQuotedTriples: [ string, boolean ][] = [
   [ 'RdfStoreIndexNestedMapRecursiveQuoted', true ],
   [ 'RdfStoreIndexNestedRecord', false ],
   [ 'RdfStoreIndexNestedRecordQuoted', true ],
+  [ 'RdfStoreIndexNestedMapSampling', false]
 ];
+
+export const indexSupportSampling: [string, boolean ][] = [
+  [ 'RdfStoreIndexNestedMap', false ],
+  [ 'RdfStoreIndexNestedMapQuoted', false ],
+  [ 'RdfStoreIndexNestedMapRecursive', false ],
+  [ 'RdfStoreIndexNestedMapRecursiveQuoted', false ],
+  [ 'RdfStoreIndexNestedRecord', false ],
+  [ 'RdfStoreIndexNestedRecordQuoted', false ],
+  [ 'RdfStoreIndexNestedMapSampling', true ]
+]
+export const samplingSupported = new Set(
+  indexSupportSampling.filter(([_, value]) => value).map(([key]) => key)
+);
 
 export const dictClazzToInstance: Record<string, () => ITermDictionary<number>> = {
   TermDictionaryNumberMap: () => new TermDictionaryNumberMap(),

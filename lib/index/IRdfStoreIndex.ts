@@ -15,6 +15,10 @@ export interface IRdfStoreIndex<E, V> {
      * and filtered by the upper store afterwards.
      */
     quotedTripleFiltering?: boolean;
+    /**
+     * If true, supports sampling according to indexes
+     */
+    sampling?: boolean
   };
   /**
    * Set the value for a key (an encoded quad) in the index.
@@ -60,4 +64,8 @@ export interface IRdfStoreIndex<E, V> {
    * @param terms An iterable of pattern terms, ordered in the component order of this index.
    */
   count: (terms: QuadPatternTerms) => number;
-}
+  /**
+   * 
+   */
+  sample?: (terms: QuadPatternTerms, indexes: number[]) => IterableIterator<QuadTerms>;
+  }
