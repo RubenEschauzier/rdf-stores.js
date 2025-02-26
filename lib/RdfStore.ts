@@ -14,6 +14,7 @@ import { RdfStoreIndexNestedMapQuoted } from './index/RdfStoreIndexNestedMapQuot
 import type { IRdfStoreOptions } from './IRdfStoreOptions';
 import { getBestIndex, orderQuadComponents, quadToPattern } from './OrderUtils';
 import type { EncodedQuadTerms, QuadPatternTerms } from './PatternTerm';
+import { RdfStoreIndexNestedMapSampling } from './index/RdfStoreIndexNestedMapSampling';
 
 /**
  * An RDF store allows quads to be stored and fetched, based on one or more customizable indexes.
@@ -47,10 +48,11 @@ export class RdfStore<E = any, Q extends RDF.BaseQuad = RDF.Quad> implements RDF
    * Concretely, this store stores triples in GSPO, GPOS, and GOSP order,
    * and makes use of in-memory number dictionary encoding.
    */
-  public static createDefault(): RdfStore<number> {
+  public static createDefault(sampling?: boolean): RdfStore<number> {
     return new RdfStore<number>({
       indexCombinations: RdfStore.DEFAULT_INDEX_COMBINATIONS,
-      indexConstructor: subOptions => new RdfStoreIndexNestedMapQuoted(subOptions),
+      indexConstructor: sampling ? subOptions => new RdfStoreIndexNestedMapSampling(subOptions) 
+       : subOptions => new RdfStoreIndexNestedMapQuoted(subOptions),
       dictionary: new TermDictionaryQuotedIndexed(new TermDictionaryNumberRecordFullTerms()),
       dataFactory: new DataFactory(),
     });
@@ -335,12 +337,13 @@ export class RdfStore<E = any, Q extends RDF.BaseQuad = RDF.Quad> implements RDF
    * @param object 
    * @param graph 
    */
-  public * sample( 
+  public * sampleQuads( 
     indexes: number[] ,  
     subject?: RDF.Term | null,
     predicate?: RDF.Term | null,
     object?: RDF.Term | null,
     graph?: RDF.Term | null,
+    
   ){
     if (!Object.values(this.indexesWrapped).every(wrapped => wrapped.index.features.sampling)){
       throw new Error("Tried to sample from rdf-store with index that does not support sampling");

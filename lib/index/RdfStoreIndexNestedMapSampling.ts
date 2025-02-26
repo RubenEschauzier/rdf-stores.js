@@ -7,20 +7,16 @@ import { RdfStoreIndexNestedMap } from './RdfStoreIndexNestedMap';
 import type { NestedMapActual } from './RdfStoreIndexNestedMap';
 
 export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap<E, V> {
-  protected readonly dictionary: ITermDictionary<E>;
-  protected readonly nestedMap: NestedMapActual<E, V>;
   protected readonly protectedCountKey: symbol = Symbol('_count_');
   protected readonly protectedArrayKey: symbol = Symbol('_array_');
 
-  public readonly features = {
+  public override readonly features = {
     quotedTripleFiltering: false,
     sampling: true
   };
 
   public constructor(options: IRdfStoreOptions<E>) {
     super(options);
-    this.dictionary = options.dictionary;
-    this.nestedMap = new Map();
   }
 
   public override set(terms: EncodedQuadTerms<E>, value: V): boolean {
@@ -291,9 +287,11 @@ export class RdfStoreIndexNestedMapSampling<E, V> extends RdfStoreIndexNestedMap
       searchIndex = searchResultMap0.searchIndex;
       partialQuad0 = this.dictionary.decode(searchResultMap0.key)
       const map1: NestedMapActual<E, V> = <any> map0.get(searchResultMap0.key);
+      
       if (id1 !== undefined && !map1.has(id1)) {
         return;
       }
+
       const searchResultMap1 = this.searchMap(id1, map1, searchIndex, index);
       searchIndex = searchResultMap1.searchIndex;
       partialQuad1 = this.dictionary.decode(searchResultMap1.key)

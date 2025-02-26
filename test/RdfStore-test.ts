@@ -918,14 +918,14 @@ describe('RdfStore', () => {
             describe('sample', () => {
               it('should error when using indexes not supporting sampling', () => {
                 if (!samplingSupported.has(indexClazz)){
-                  expect(() => [...store.sample([0], 
+                  expect(() => [...store.sampleQuads([0], 
                     undefined, undefined, undefined, undefined)]
                   ).toThrow("Tried to sample from rdf-store with index that does not support sampling");  
                 }
               });
               it('should correctly sample with undefined subject', () => {
                 if(samplingSupported.has(indexClazz)){
-                  expect([...store.sample([0,1], 
+                  expect([...store.sampleQuads([0,1], 
                     undefined, DF.namedNode('p1'), DF.namedNode('o1'), DF.namedNode('g1'),
                   )]).toEqual([
                     DF.quad(
